@@ -15,10 +15,10 @@ db = client.Comics
 # Get HTML
 URL = 'https://www.instocktrades.com/damages?pg=1'
 
-# # Discord Token
-TOKEN = 'MTA1OTIyMjQ1NzQ5MzQ4Nzc2OA.G9cBn5.tGw4GRd0Y0M_DE2quP-UVN8LufanXFLrTg-5P0'
+# Discord Token from Dir 
+TOKEN = open('PATH_TO_TOKEN', 'r').read()
 # Discord Channel ID
-CHANNEL_ID = 1059230746532905091
+CHANNEL_ID = int(open('PATH_TO_CHANNEL_ID', 'r').read())
 # Discord Client to send messages to the channel
 client = discord.Client(intents=discord.Intents.default())
 
