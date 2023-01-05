@@ -6,8 +6,10 @@ import typing
 import asyncio
 import functools
 import requests
+import sys
+from os import environ
 from bs4 import BeautifulSoup
-
+from dotenv import load_dotenv
 # Connect to MONGODB
 from pymongo import MongoClient
 client = MongoClient('localhost', 27017)
@@ -15,10 +17,12 @@ db = client.Comics
 # Get HTML
 URL = 'https://www.instocktrades.com/damages?pg=1'
 
+load_dotenv()
+
 # Discord Token from Dir 
-TOKEN = open('PATH_TO_TOKEN', 'r').read()
+TOKEN = environ["TOKEN"]
 # Discord Channel ID
-CHANNEL_ID = int(open('PATH_TO_CHANNEL_ID', 'r').read())
+CHANNEL_ID = int(open('channel_id', 'r').read())
 # Discord Client to send messages to the channel
 client = discord.Client(intents=discord.Intents.default())
 
@@ -101,46 +105,53 @@ async def get_comics(url):
 
     return total_damage
 
-def to_thread(func: typing.Callable) -> typing.Coroutine:
-    '''Run a blocking function in a thread'''
-    @functools.wraps(func)
-    async def wrapper(*args, **kwargs):
-        loop = asyncio.get_running_loop()
-        return await loop.run_in_executor(None, functools.partial(func, *args, **kwargs))
-    return wrapper
+# def to_thread(func: typing.Callable) -> typing.Coroutine:
+#     '''Run a blocking function in a thread'''
+#     @functools.wraps(func)
+#     async def wrapper(*args, **kwargs):
+#         loop = asyncio.get_running_loop()
+#         return await loop.run_in_executor(None, functools.partial(func, *args, **kwargs))
+#     return wrapper
 
-@to_thread
-def BlockingSleep():
-    '''Sleep for 60 seconds'''
-    time.sleep(60)
+# @to_thread
+# def BlockingSleep():
+#     '''Sleep for 60 seconds'''
+#     asyncio.sleep(5)
+#     print('Sleeping for 5 seconds')
 
-async def run_blocking():
-    '''Run the blocking function'''
+async def loop_scrapping():
+    '''Loop the scrapping function every 60 seconds'''
     while True:
-        TOTAL = await get_comics(URL)
-        print('Updated at', datetime.datetime.now())
-        print('Total Damage:', TOTAL)
-        # Print the total number of comics in the database
-        print('Total in database:', db.Damages.count_documents({}))
-        # Sleep for 60 seconds
-        await BlockingSleep()
+        try:
+            TOTAL = await get_comics(URL)
+            print('Updated at', datetime.datetime.now())
+            print('Total Damage:', TOTAL)
+            # Print the total number of comics in the database
+            print('Total in database:', db.Damages.count_documents({}))
+            # Sleep
+            await asyncio.sleep(60)
+            print("Slept for 60 seconds")
+        except Exception as e:
+            # Send the error to the channel
+            await send_message(f'Error: {e}')
+            # Kill the script
+            sys.exit()
 
 @client.event
 async def on_ready():
     print('We have logged in as {0.user}'.format(client))
     channel = client.get_channel(CHANNEL_ID)
     await channel.send('Online and Starting Up...')
-    time.sleep(5)
+    await asyncio.sleep(5)
     # Delete the last message
     async for message in channel.history(limit=1):
         await message.delete()
     # Run the blocking function
-    await run_blocking()
+    await loop_scrapping()
     
 
 # Run the bot
 client.run(TOKEN)
-
 
 
 # https://discord.com/api/oauth2/authorize?client_id=1059222457493487768&permissions=274877908992&scope=bot
