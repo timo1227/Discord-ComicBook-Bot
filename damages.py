@@ -22,7 +22,7 @@ load_dotenv()
 # Discord Token from Dir 
 TOKEN = environ["TOKEN"]
 # Discord Channel ID
-CHANNEL_ID = int(open('channel_id', 'r').read())
+CHANNEL_ID = int(environ["CHANNEL"])
 # Discord Client to send messages to the channel
 client = discord.Client(intents=discord.Intents.default())
 
