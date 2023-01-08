@@ -11,3 +11,4 @@ pip install aiohttp[speedups]
 pip install bs4
 pip install lxml
 pip install python-dotenv
+pip install dnspython
