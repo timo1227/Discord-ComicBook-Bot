@@ -11,15 +11,14 @@ import sys
 from os import environ
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
-
-# Connect to MONGODB
 from pymongo import MongoClient
-client = MongoClient('localhost', 27017)
-db = client.Comics
-# Get HTML
-URL = 'https://www.instocktrades.com/damages?pg=1'
 
 load_dotenv()
+# Connect to MONGODB
+connection_url = environ["MONGO_URL"]
+client = MongoClient(connection_url)
+db = client.get_database('Comics')
+
 
 # Discord Token from Dir 
 TOKEN = environ["TOKEN"]
@@ -104,7 +103,7 @@ async def loop_scrapping():
     while True:
         try:
             await client.change_presence(activity=discord.Game(name='Scraping'))
-            TOTAL = await get_comics(URL)
+            TOTAL = await get_comics('https://www.instocktrades.com/damages?pg=1')
             await client.change_presence(activity=discord.Game(name='Sleeping'))
             print('Updated at', datetime.datetime.now())
             print('Total Damage:', TOTAL)
