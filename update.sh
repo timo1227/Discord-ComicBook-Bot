@@ -1,16 +1,5 @@
 # !/bin/bash
 
-# Update the system
-sudo apt update && sudo apt upgrade -y
-# Install the pip3
-sudo apt install python3-pip -y
-# Pip3 install the requirements
-pip install discord
-pip install requests
-pip install bs4
-pip install lxml
-pip install python-dotenv
-
 # Check if the bot is running
 if pgrep -x "python3" > /dev/null
 then
@@ -19,6 +8,7 @@ then
     # Kill the bot
     pkill python3
 fi
+
 # Pull the latest version of the bot
 git pull origin main --allow-unrelated-histories -f
 
@@ -26,6 +16,7 @@ git pull origin main --allow-unrelated-histories -f
 if [ -f .env ]; then
     echo "\n"
 else
+    bash requirements.sh
     echo ".env does not exist"
     echo "Creating .env"
     # create the .env file
