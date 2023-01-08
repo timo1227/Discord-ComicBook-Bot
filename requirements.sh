@@ -12,3 +12,4 @@ pip install bs4
 pip install lxml
 pip install python-dotenv
 pip install dnspython
+pip install pymongo
