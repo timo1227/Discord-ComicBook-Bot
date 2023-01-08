@@ -5,11 +5,12 @@ import discord
 import typing
 import asyncio
 import functools
-import requests
+import aiohttp
 import sys
 from os import environ
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
+
 # Connect to MONGODB
 from pymongo import MongoClient
 client = MongoClient('localhost', 27017)
@@ -34,96 +35,76 @@ async def send_message(message):
 async def get_comics(url):
     '''Get the comics from the URL and insert current comic into the database'''
     total_damage = 0
-    # Get total number of pages
-    response = requests.get(url, timeout=5)
-    html = response.text
-    soup = BeautifulSoup(html, 'html.parser')
-    # get the data-max attribute from the input box with id="currentpage"
-    pages = soup.find('input', {'id': 'currentpage'})
-    pages = pages['data-max']
-    print('Total pages:', pages)
-    # Get comics from each page
-    for page in range(1, int(pages) + 1):
-        url = 'https://www.instocktrades.com/damages?pg='
-        # print('New URL:', url + str(page))
-        response = requests.get(url + str(page), timeout=5)
-        html = response.text
-        soup = BeautifulSoup(html, 'html.parser')
-        # Get all items
-        items = soup.find_all('div', {'class': 'item'})
-        for item in items:
-            # Increment total damage
-            total_damage += 1
-            # Get Title Price and Discount
-            title = item.find('div', {'class': 'title'}).text
-            # Price the first
-            price = item.find('div', {'class': 'srp'}).text
-            discount = item.find('div', {'class': 'discount'}).text
-            sale_price = item.find('div', {'class': 'price'}).text
-            href = item.find('div', {'class': 'title'}).find('a')['href']
-            link = 'https://www.instocktrades.com' + href
-            # Strip the price and discount
-            title = title.strip()
-            price = price.strip()
-            discount = discount.strip()
-            sale_price = sale_price.strip()
-            # Print the data for TESTING
-            # print('Title:', title)
-            # print('Price:', price)
-            # print('Discount:', discount)
-            # print('Sale Price:', sale_price)
-            # print('Link:', 'https://www.instocktrades.com' + href)
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            html = await response.text()
+            soup = BeautifulSoup(html, 'html.parser')
+            # get the data-max attribute from the input box with id="currentpage"
+            pages = soup.find('input', {'id': 'currentpage'})
+            pages = pages['data-max']
+            print('Total pages:', pages)
+            # Get comics from each page
+            for page in range(1, int(pages) + 1):
+                url = 'https://www.instocktrades.com/damages?pg='
+                async with session.get(url + str(page)) as response:
+                    html = await response.text()
+                    soup = BeautifulSoup(html, 'html.parser')
+                    # Get all items
+                    items = soup.find_all('div', {'class': 'item'})
+                    for item in items:
+                        # Increment total damage
+                        total_damage += 1
+                        # Get Title Price and Discount
+                        title = item.find('div', {'class': 'title'}).text
+                        # Price the first
+                        price = item.find('div', {'class': 'srp'}).text
+                        discount = item.find('div', {'class': 'discount'}).text
+                        sale_price = item.find('div', {'class': 'price'}).text
+                        href = item.find('div', {'class': 'title'}).find('a')['href']
+                        link = 'https://www.instocktrades.com' + href
+                        # Strip the price and discount
+                        title = title.strip()
+                        price = price.strip()
+                        discount = discount.strip()
+                        sale_price = sale_price.strip()
+                        # If title contains 'Absolute' or 'Omnibus' enter into database else skip
+                        if 'Absolute' in title or 'Omnibus' in title:
+                            # Create Document
+                            doc = {
+                                'Title': title,
+                                'Price': price,
+                                'Discount': discount,
+                                'Sale Price': sale_price,
+                                'Link': link,
+                                'Last Updated': datetime.datetime.now()
+                            }
+                            # Check if the document already exists
+                            if db.Damages.find_one({'Title': title}) is None:
+                                # Insert the document
+                                db.Damages.insert_one(doc)
+                                print('Inserted into database')
+                                # Alert the user New Comic
+                                message = f"**{title}**\nPrice: {price} Discount: {discount}\nSale Price: {sale_price}\nLink: {link}\n\n\n"
+                                await send_message(message)
+                            else:
+                                # Update the document with the new data
+                                db.Damages.update_one({'Title': title}, {'$set': doc})
 
-            # If title contains 'Absolute' or 'Omnibus' enter into database else skip
-            if 'Absolute' in title or 'Omnibus' in title:
-                # Create Document
-                doc = {
-                    'Title': title,
-                    'Price': price,
-                    'Discount': discount,
-                    'Sale Price': sale_price,
-                    'Link': link,
-                    'Last Updated': datetime.datetime.now()
-                }
-                # Check if the document already exists
-                if db.Damages.find_one({'Title': title}) is None:
-                    # Insert the document
-                    db.Damages.insert_one(doc)
-                    print('Inserted into database')
-                    # Alert the user New Comic
-                    message = f"**{title}**\nPrice: {price} Discount: {discount}\nSale Price: {sale_price}\nLink: {link}\n\n\n"
-                    await send_message(message)
-                else:
-                    # Update the document with the new data
-                    db.Damages.update_one({'Title': title}, {'$set': doc})
-
-            # Scanning the database for old comics and removing the if older than 5 day
-            for document in db.Damages.find():
-                if document['Last Updated'] < datetime.datetime.now() - datetime.timedelta(days=5):
-                    print('Removing:', document['Title'])
-                    db.Damages.delete_one({'Title': document['Title']})
-
+    # Scanning the database for old comics and removing the if older than 5 day
+    for document in db.Damages.find():
+        if document['Last Updated'] < datetime.datetime.now() - datetime.timedelta(days=5):
+            print('Removing:', document['Title'])
+            db.Damages.delete_one({'Title': document['Title']})
     return total_damage
 
-# def to_thread(func: typing.Callable) -> typing.Coroutine:
-#     '''Run a blocking function in a thread'''
-#     @functools.wraps(func)
-#     async def wrapper(*args, **kwargs):
-#         loop = asyncio.get_running_loop()
-#         return await loop.run_in_executor(None, functools.partial(func, *args, **kwargs))
-#     return wrapper
-
-# @to_thread
-# def BlockingSleep():
-#     '''Sleep for 60 seconds'''
-#     asyncio.sleep(5)
-#     print('Sleeping for 5 seconds')
 
 async def loop_scrapping():
     '''Loop the scrapping function every 60 seconds'''
     while True:
         try:
+            await client.change_presence(activity=discord.Game(name='Scraping'))
             TOTAL = await get_comics(URL)
+            await client.change_presence(activity=discord.Game(name='Sleeping'))
             print('Updated at', datetime.datetime.now())
             print('Total Damage:', TOTAL)
             # Print the total number of comics in the database
@@ -132,22 +113,47 @@ async def loop_scrapping():
             await asyncio.sleep(60)
             print("Slept for 60 seconds")
         except Exception as e:
-            # Send the error to the channel
-            await send_message(f'Error: {e}')
-            # Kill the script
-            sys.exit()
+            # If time out error sleep for 5 minutes
+            if 'timed out' in str(e):
+                # Send Message the will restart the loop in 5 minutes
+                await send_message('Timed out, restarting in 5 minutes')
+                await asyncio.sleep(300)
+                # restart the loop
+                await loop_scrapping()
+            else:
+                # Send the error to the channel
+                await send_message(f'Error: {e}')
+                # Kill the script
+                sys.exit()
+
+# Start Command From Channel
+# @client.event
+# async def on_message(message):
+#     # If the message is from the bot ignore it
+#     if message.author == client.user:
+#         return
+#     # If the message is not from the channel ignore it
+#     if message.channel.id != CHANNEL_ID:
+#         return
+#     # If the message is not !start ignore it
+#     if message.content != '!start':
+#         return
+#     # Print the message
+#     print(message.content)
+#     # Set Status to 'Scraping'
+#     await client.change_presence(activity=discord.Game(name='Scraping'))
+#     # Run the blocking function
+#     await loop_scrapping()
+
+
 
 @client.event
 async def on_ready():
     print('We have logged in as {0.user}'.format(client))
     channel = client.get_channel(CHANNEL_ID)
-    await channel.send('Online and Starting Up...')
-    await asyncio.sleep(5)
-    # Delete the last message
-    async for message in channel.history(limit=1):
-        await message.delete()
-    # Run the blocking function
+    print ('Waiting for !start command')
     await loop_scrapping()
+
     
 
 # Run the bot
