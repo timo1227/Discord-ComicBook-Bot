@@ -20,7 +20,7 @@ db = client.get_database("Comics")
 # Discord Token from Dir
 TOKEN = environ["TOKEN"]
 # Discord Channel ID
-CHANNEL_ID = int(environ["CHANNEL_TEST"])
+CHANNEL_ID = int(environ["CHANNEL"])
 # Discord Client to send messages to the channel
 client = discord.Client(intents=discord.Intents.all())
 # Bool to check if the loop is running
