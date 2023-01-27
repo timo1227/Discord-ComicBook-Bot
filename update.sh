@@ -14,7 +14,7 @@ git pull origin main --allow-unrelated-histories -f
 
 # Check if .env exists in the directory
 if [ -f .env ]; then
-    echo "\n"
+    echo ""
 else
     bash requirements.sh
     echo ".env does not exist"

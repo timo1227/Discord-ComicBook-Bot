@@ -13,3 +13,4 @@ pip install lxml
 pip install python-dotenv
 pip install dnspython
 pip install pymongo
+pip install motor
