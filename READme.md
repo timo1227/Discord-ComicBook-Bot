@@ -1,1 +1,1 @@
-#Discord Bot To Alert For New Inventory on InStockTrades.com
+Discord Bot To Alert For New Inventory on InStockTrades.com
