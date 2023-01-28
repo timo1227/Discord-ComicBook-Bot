@@ -1,0 +1,10 @@
+discord
+asyncio
+aiohttp
+motor
+cchardet
+aiodns
+aiohttp[speedups]
+bs4
+lxml
+python-dotenv
