@@ -95,16 +95,18 @@ async def get_comics(url):
                                 "Last Updated": datetime.datetime.now(),
                             }
                             # Check if the document already exists
-                            if db.Damages.find_one({"Title": title}) is None:
-                                # Insert the document
-                                db.Damages.insert_one(doc)
+                            if await db.Damages.count_documents({"Title": title}) == 0:
+                                # Insert the document into the database
+                                await db.Damages.insert_one(doc)
                                 print("Inserted into database")
                                 # Alert the user New Comic
                                 message = f"**{title}**\nPrice: {price} Discount: {discount}\nSale Price: {sale_price}\nLink: {link}\n\n\n"
                                 await send_message(message)
                             else:
                                 # Update the document with the new data
-                                db.Damages.update_one({"Title": title}, {"$set": doc})
+                                await db.Damages.update_one(
+                                    {"Title": title}, {"$set": doc}
+                                )
     # When done return the total damage
     return total_damage
 
