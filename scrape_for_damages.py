@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Connect to MONGODB
-connection_url = environ["MONGO_URL"]
+connection_url = environ["MONGO"]
 client = motor.motor_asyncio.AsyncIOMotorClient(connection_url)
 db = client.get_database("Comics")
 
