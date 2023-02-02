@@ -1,0 +1,13 @@
+version: '3.8'
+services: 
+    mongodb:
+      image: mongo
+      container_name: db
+      volumes:
+        - /Users/Timo/mongodb/database:/data/db
+      environment:
+        - PUID=1000
+        - PGID=1000
+      ports:
+        - 27017:27017
+      restart: unless-stopped
