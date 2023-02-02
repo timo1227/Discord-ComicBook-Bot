@@ -118,17 +118,14 @@ async def loop_scrapping():
         try:
             await client.change_presence(activity=discord.Game(name="Scraping"))
             total = await get_comics("https://www.instocktrades.com/damages?pg=1")
+            print(f"Total Damages: {total}")
             if LOOP_RUNNING:
                 await client.change_presence(activity=discord.Game(name="Sleeping"))
-            print("Updated at", datetime.datetime.now())
-            print("Total Damage:", total)
-            # Print the total number of comics in the database
-            print("Total in database:", await db.Damages.count_documents({}))
-            # Delete old documents
-            await delete_old_documents()
+            # Once a day delete the old documents
+            if datetime.datetime.now().hour == 0:
+                await delete_old_documents()
             # Sleep for 5 seconds
             await asyncio.sleep(5)
-            print("Slept for 5 seconds")
         except Exception as error:
             # If time out error sleep for 5 minutes
             if "timed out" in str(error):
@@ -195,6 +192,3 @@ async def on_ready():
 
 # Run the bot
 client.run(TOKEN)
-
-
-# https://discord.com/api/oauth2/authorize?client_id=1059222457493487768&permissions=2733747731520&scope=bot
