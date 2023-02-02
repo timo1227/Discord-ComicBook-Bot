@@ -1,6 +1,6 @@
 # Discord Bot for InStockTrades Damage Comics
 
-![Version](https://img.shields.io/badge/version-0.1-blue.svg?cacheSeconds=2592000)\
+![Version](https://img.shields.io/badge/version-0.95-blue.svg?cacheSeconds=2592000)\
 <br>
 This Bot will scrape InStockTrades for Comics under the Damage Category
 then Notify User about new Comics Added to the Website.
