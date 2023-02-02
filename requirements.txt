@@ -2,7 +2,7 @@ discord
 asyncio
 aiohttp
 motor
-cchardet
+# cchardet
 aiodns
 aiohttp[speedups]
 bs4
