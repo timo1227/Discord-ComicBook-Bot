@@ -14,7 +14,7 @@ then Notify User about new Comics Added to the Website.
 
 ## Requirements
 
-Install Docker-Compose: [Docker](https://docs.docker.com/compose/install/)\ 
+Install Docker-Compose: [Docker](https://docs.docker.com/compose/install/)\
 Obtain a Discord Bot Token: [Discord](https://discord.com/developers/applications/)\
 Obtain the Channel ID you want the Bot to send the Alert to: [Where to find ID](https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-)\
 Allow all Privileged Gateway Intents in the Bot Settings: [Privileged Gateway Intents](https://discordpy.readthedocs.io/en/latest/intents.html)\
