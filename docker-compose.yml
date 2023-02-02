@@ -1,13 +1,45 @@
 version: '3.8'
-services: 
-    mongodb:
-      image: mongo
-      container_name: db
-      volumes:
-        - /Users/Timo/mongodb/database:/data/db
-      environment:
-        - PUID=1000
-        - PGID=1000
-      ports:
-        - 27017:27017
-      restart: unless-stopped
+services:
+  mongodb:
+    image: mongo
+    container_name: mongodb
+    volumes:
+      - ~/mongodb/database:/data/db
+    networks:
+      - mongo-compose-network
+    ports:
+      - 27017:27017
+    restart: unless-stopped
+
+  mongo-express:
+    image: mongo-express
+    container_name: mongo-express
+    ports:
+      - 8081:8081
+    restart: always
+    depends_on:
+      - mongodb
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongodb
+    networks:
+      - mongo-compose-network
+    volumes:
+      - ~/mongodb/database:/data/db
+
+  python:
+    container_name: Bot
+    restart: always
+    environment:
+      - MONGO=mongodb://mongodb:27017
+      - CHANNEL=<CHANNEL_HERE>
+      - TOKEN=<TOKEN_HERE>
+    depends_on:
+      - mongodb
+    build: .
+    command: python3 scrape_for_damages.py
+    networks:
+      - mongo-compose-network
+
+networks:
+  mongo-compose-network:
+    driver: bridge

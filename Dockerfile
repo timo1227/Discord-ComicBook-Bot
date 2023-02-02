@@ -5,6 +5,4 @@ WORKDIR /Discord-ComicBook-Bot
 # Install dependencies
 COPY . .
 RUN pip install -r requirements.txt
-# Pull the latest from git
-# Run the Entry Point
-ENTRYPOINT ["bash", "start.sh"]
+CMD [ "python3" , "scrape_for_damages.py" ]
